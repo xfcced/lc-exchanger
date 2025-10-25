@@ -1,0 +1,24 @@
+# Node / Vite artifacts
+client/node_modules/
+client/dist/
+client/.svelte-kit/
+client/.vite/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Env files
+.env
+.env.*
+
+# macOS
+.DS_Store
+
+# Go build artifacts
+server/bin/
+server/*.exe
+server/*.test
