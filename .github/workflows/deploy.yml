@@ -18,6 +18,7 @@ jobs:
           key: ${{ secrets.FRANKFURT_PRIVATE_KEY }}
           script: |
             cd "$DEPLOY_PATH"
+            pwd
             git pull --ff-only
             docker compose -f docker-compose.yml up -d --remove-orphans
         env:
