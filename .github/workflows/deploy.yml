@@ -1,0 +1,24 @@
+name: Deploy Service on Push to Main
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: SSH and run Docker Compose
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.FRANKFURT_PRIVATE_KEY }}
+          script: |
+            cd "$DEPLOY_PATH"
+            git pull --ff-only
+            docker compose -f docker-compose.yml up -d --remove-orphans
+        env:
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
