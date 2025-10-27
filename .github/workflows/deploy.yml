@@ -17,9 +17,6 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.FRANKFURT_PRIVATE_KEY }}
           script: |
-            cd "$DEPLOY_PATH"
-            pwd
+            cd "${{ secrets.DEPLOY_PATH }}"
             git pull --ff-only
             docker compose -f docker-compose.yml up -d --remove-orphans
-        env:
-          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
