@@ -1,0 +1,84 @@
+name: Deploy Service on Push to Main
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: client/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./client
+        run: npm ci
+
+      - name: Build frontend
+        working-directory: ./client
+        run: npm run build
+
+      - name: Deploy frontend to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: 'client/dist/*'
+          target: '/home/ubuntu/www/exchanger'
+          strip_components: 2
+          rm: true
+
+  build-and-push-backend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./server
+          file: ./server/Dockerfile
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/exchanger-server:latest,${{ secrets.DOCKERHUB_USERNAME }}/exchanger-server:${{ github.sha }}
+          cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/exchanger-server:buildcache
+          cache-to: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/exchanger-server:buildcache,mode=max
+
+  deploy-to-ec2:
+    runs-on: ubuntu-latest
+    needs: [build-frontend, build-and-push-backend]
+    steps:
+      - name: Deploy backend on EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/exchanger-server:latest
+            docker stop exchanger-server || true
+            docker rm exchanger-server || true
+            docker run -d \
+              --name exchanger-server \
+              --restart unless-stopped \
+              -p 8080:8080 \
+              ${{ secrets.DOCKERHUB_USERNAME }}/exchanger-server:latest
