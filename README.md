@@ -2,6 +2,8 @@
 
 **This project supports simultaneous multi-currency conversion**, displaying exchange rates for multiple currencies at once.
 
+**Demo**: https://ex.luchang.xyz
+
 Unlike most currency conversion tools that only support 1-to-1 conversion (requiring users to repeatedly switch settings for different currency pairs), this dramatically improves efficiency for users dealing with international transactions or multi-currency portfolios.
 
 The application fetches live exchange rate data from the [Frankfurter API](https://github.com/lineofflight/frankfurter) project and implements short-term caching to optimize performance.
