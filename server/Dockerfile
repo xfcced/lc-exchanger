@@ -9,7 +9,6 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o server
 
 FROM gcr.io/distroless/base-debian12
 WORKDIR /app
-COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 COPY --from=build /app/server /app/server
 EXPOSE 8080
 CMD ["./server"]
